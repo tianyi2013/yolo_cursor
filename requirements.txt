@@ -1,0 +1,6 @@
+opencv-python>=4.8.0
+numpy>=1.26.0
+fpdf>=1.7.2
+setuptools>=68.0.0
+wheel>=0.41.0
+coverage>=7.4.0 

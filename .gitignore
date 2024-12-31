@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# Project specific
+resources/images/*
+resources/output/*
+test_reports/*
+models/*
+*.weights
+*.cfg
+*.names
+
+# Keep directories but not their contents
+!resources/images/.gitkeep
+!resources/output/.gitkeep
+!test_reports/.gitkeep
+!models/.gitkeep
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# Logs
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db 
