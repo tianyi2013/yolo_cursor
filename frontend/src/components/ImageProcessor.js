@@ -7,8 +7,9 @@ import {
   Alert,
   Typography,
   Fade,
+  Stack,
 } from '@mui/material';
-import { CloudUpload, Image, PictureAsPdf } from '@mui/icons-material';
+import { CloudUpload, Image, PictureAsPdf, Refresh } from '@mui/icons-material';
 import { processImage, getDownloadUrl } from '../services/api';
 import ImageViewer from './ImageViewer';
 
@@ -49,6 +50,13 @@ const ImageProcessor = () => {
     window.open(getDownloadUrl(processedData.request_id, filename), '_blank');
   };
 
+  const handleReset = () => {
+    setSelectedFile(null);
+    setPreview(null);
+    setProcessedData(null);
+    setError(null);
+  };
+
   return (
     <Box sx={{ mb: 4 }}>
       <Paper 
@@ -62,28 +70,54 @@ const ImageProcessor = () => {
           background: 'white',
         }}
       >
-        <input
-          accept="image/*"
-          type="file"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-          id="image-input"
-        />
-        <label htmlFor="image-input">
-          <Button
-            variant="contained"
-            component="span"
-            startIcon={<Image />}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              fontSize: '1.1rem',
-            }}
-          >
-            Select Image
-          </Button>
-        </label>
+        <Typography variant="h6" gutterBottom>
+          Upload Image
+        </Typography>
+
+        <Stack direction="row" spacing={2}>
+          <input
+            accept="image/*"
+            type="file"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+            id="image-input"
+          />
+          <label htmlFor="image-input">
+            <Button
+              variant="contained"
+              component="span"
+              startIcon={<Image />}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1.1rem',
+              }}
+            >
+              Select Image
+            </Button>
+          </label>
+
+          {selectedFile && (
+            <Button
+              variant="contained"
+              onClick={handleReset}
+              startIcon={<Refresh />}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1.1rem',
+                backgroundColor: '#f44336',
+                '&:hover': {
+                  backgroundColor: '#d32f2f',
+                },
+              }}
+            >
+              Reset
+            </Button>
+          )}
+        </Stack>
 
         {selectedFile && (
           <Button

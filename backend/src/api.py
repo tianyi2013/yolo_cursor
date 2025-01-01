@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import shutil
@@ -78,4 +78,41 @@ async def cleanup(request_id: str):
     request_dir = TEMP_DIR / request_id
     if request_dir.exists():
         shutil.rmtree(request_dir)
-    return {"status": "cleaned"} 
+    return {"status": "cleaned"}
+
+@app.post("/process-frame/")
+async def process_frame(file: UploadFile = File(...)):
+    """Process a single frame from video stream"""
+    try:
+        # Read image data
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if image is None:
+            return {"error": "Invalid image data"}
+
+        # Resize image for faster processing
+        scale = 0.5
+        small_image = cv2.resize(image, None, fx=scale, fy=scale)
+
+        # Detect objects
+        boxes, class_ids, confidences = detector.detect_objects(small_image)
+        
+        # Only draw annotations if objects were detected
+        if len(boxes) > 0:
+            # Scale boxes back to original size
+            boxes = [box / scale for box in boxes]  # boxes are already numpy arrays
+            annotated_image = detector.draw_annotations(image, boxes, class_ids, confidences)
+        else:
+            annotated_image = image
+        
+        # Convert back to bytes with reduced quality
+        _, buffer = cv2.imencode('.jpg', annotated_image, [cv2.IMWRITE_JPEG_QUALITY, 75])
+        image_bytes = buffer.tobytes()
+        
+        return Response(content=image_bytes, media_type="image/jpeg")
+
+    except Exception as e:
+        print(f"Error processing frame: {str(e)}")  # Add logging
+        return {"error": str(e)} 
