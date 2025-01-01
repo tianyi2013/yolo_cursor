@@ -1,0 +1,13 @@
+__pycache__/
+venv/
+*.pyc
+resources/images/*
+resources/output/*
+test_reports/*
+models/*
+temp/*
+!resources/images/.gitkeep
+!resources/output/.gitkeep
+!test_reports/.gitkeep
+!models/.gitkeep
+.coverage 

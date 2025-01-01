@@ -3,11 +3,12 @@ import sys
 from pathlib import Path
 import coverage
 import datetime
+import json
 from typing import Dict, List
 
 # Add the project root directory to Python path
-project_root = Path(__file__).parent.parent
-sys.path.append(str(project_root))
+backend_dir = Path(__file__).parent.parent
+sys.path.append(str(backend_dir))
 
 class TestReport:
     def __init__(self):
@@ -34,16 +35,21 @@ class TestReport:
                 .failed {{ color: red; }}
                 .passed {{ color: green; }}
                 .coverage {{ margin-top: 20px; }}
-                table {{ border-collapse: collapse; width: 100%; }}
+                table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
                 th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
                 th {{ background-color: #f2f2f2; }}
+                .header {{ background: linear-gradient(45deg, #1976d2 30%, #2196f3 90%);
+                          color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }}
             </style>
         </head>
         <body>
-            <h1>Test Report</h1>
+            <div class="header">
+                <h1>Test Report</h1>
+                <p>Generated on: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            </div>
+            
             <div class="summary">
                 <h2>Summary</h2>
-                <p>Run Date: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}</p>
                 <p>Duration: {duration:.2f} seconds</p>
                 <p>Total Tests: {self.total_tests}</p>
                 <p>Passed Tests: <span class="passed">{self.passed_tests}</span></p>
@@ -56,7 +62,7 @@ class TestReport:
                 <table>
                     <tr>
                         <th>Module</th>
-                        <th>Coverage</th>
+                        <th>Coverage %</th>
                         <th>Missing Lines</th>
                     </tr>
         """
@@ -69,6 +75,8 @@ class TestReport:
                         <td>{', '.join(map(str, data['missing_lines']))}</td>
                     </tr>
             """
+
+        html_content += "</table>"
 
         if self.failed_tests:
             html_content += """
@@ -89,7 +97,6 @@ class TestReport:
             html_content += "</ul>"
 
         html_content += """
-            </table>
             </div>
         </body>
         </html>
@@ -97,9 +104,12 @@ class TestReport:
 
         output_path.write_text(html_content)
 
-def run_tests_with_coverage() -> TestReport:
+def run_tests_with_coverage():
     # Initialize coverage
-    cov = coverage.Coverage()
+    cov = coverage.Coverage(
+        source=['src'],
+        omit=['src/__init__.py', 'src/run_server.py']
+    )
     cov.start()
 
     # Initialize test report
@@ -107,12 +117,13 @@ def run_tests_with_coverage() -> TestReport:
     report.start_time = datetime.datetime.now()
 
     # Find and run tests
-    test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover(start_dir='test', pattern='test_*.py')
+    loader = unittest.TestLoader()
+    test_dir = Path(__file__).parent
+    suite = loader.discover(str(test_dir), pattern='test_*.py')
     
     # Run tests and capture results
     runner = unittest.TextTestRunner(verbosity=2)
-    result = runner.run(test_suite)
+    result = runner.run(suite)
 
     # Stop coverage
     cov.stop()
@@ -126,24 +137,23 @@ def run_tests_with_coverage() -> TestReport:
 
     # Get coverage data
     for filename in cov.get_data().measured_files():
-        # Only include our source files
-        if 'src' in filename and not filename.endswith('__init__.py'):
-            analysis = cov.analysis2(filename)
-            module_name = Path(filename).name
-            report.coverage_data[module_name] = {
-                'coverage': cov.report(include=filename, show_missing=True),
-                'missing_lines': analysis[3]  # Missing lines
-            }
+        analysis = cov.analysis2(filename)
+        module_name = Path(filename).name
+        report.coverage_data[module_name] = {
+            'coverage': cov.report(include=filename, show_missing=True),
+            'missing_lines': analysis[3]  # Missing lines
+        }
 
     report.end_time = datetime.datetime.now()
     return report, result.wasSuccessful()
 
 if __name__ == '__main__':
     # Create test_reports directory if it doesn't exist
-    reports_dir = Path('test_reports')
+    reports_dir = Path(__file__).parent.parent / 'test_reports'
     reports_dir.mkdir(exist_ok=True)
 
     # Run tests with coverage
+    print("\nRunning tests with coverage...\n")
     report, success = run_tests_with_coverage()
 
     # Generate HTML report
