@@ -53,28 +53,58 @@ class ObjectDetector:
                     confidences.append(float(confidence))
                     class_ids.append(class_id)
 
-        return boxes, class_ids, confidences
+        # Apply Non-Maximum Suppression
+        if boxes:
+            indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+            filtered_boxes = []
+            filtered_class_ids = []
+            filtered_confidences = []
+            for i in indices.flatten():
+                x, y, w, h = boxes[i]
+                filtered_boxes.append(np.array([x, y, x + w, y + h]))
+                filtered_class_ids.append(class_ids[i])
+                filtered_confidences.append(confidences[i])
+            return filtered_boxes, filtered_class_ids, filtered_confidences
+
+        return [], [], []
 
     def draw_annotations(self, image, boxes, class_ids, confidences):
-        indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-        annotated_image = image.copy()
+        """Draw bounding boxes and labels on the image"""
+        h, w = image.shape[:2]
         
-        for i in range(len(boxes)):
-            if i in indexes:
-                x, y, w, h = boxes[i]
-                label = str(self.classes[class_ids[i]])
-                confidence = confidences[i]
-                color = self.colors[class_ids[i]]
-
-                cv2.rectangle(annotated_image, (x, y), (x + w, y + h), color, 2)
-                cv2.putText(
-                    annotated_image,
-                    f"{label} {confidence:.2f}",
-                    (x, y - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
-                    color,
-                    2
-                )
-
-        return annotated_image 
+        for box, class_id, confidence in zip(boxes, class_ids, confidences):
+            x1, y1, x2, y2 = box.astype(int)
+            
+            # Draw bounding box
+            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            
+            # Prepare label text
+            label = f"{self.classes[class_id]}: {confidence:.2f}"
+            
+            # Get text size and background size
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            thickness = 2
+            (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+            
+            # Calculate text position (inside the box, near top)
+            text_x = x1 + 5
+            text_y = y1 + text_height + 10  # 10 pixels padding from top
+            
+            # Draw white background for text
+            cv2.rectangle(image, 
+                         (text_x - 2, text_y - text_height - 6),
+                         (text_x + text_width + 2, text_y + 2),
+                         (255, 255, 255), 
+                         -1)  # Filled rectangle
+            
+            # Draw text
+            cv2.putText(image, 
+                        label,
+                        (text_x, text_y),
+                        font,
+                        font_scale,
+                        (0, 0, 0),  # Black text
+                        thickness)
+        
+        return image 

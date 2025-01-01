@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Container, Typography, Paper, createTheme, ThemeProvider } from '@mui/material';
 import ImageProcessor from './components/ImageProcessor';
+import CameraView from './components/CameraView';
 
 // Create a custom theme
 const theme = createTheme({
@@ -64,10 +65,11 @@ function App() {
                 opacity: 0.9,
               }}
             >
-              Upload an image to detect objects using YOLO
+              Upload an image or use camera to detect objects using YOLO
             </Typography>
-          </Paper>
+          </Paper>          
           <ImageProcessor />
+          <CameraView />
         </Container>
       </Box>
     </ThemeProvider>
